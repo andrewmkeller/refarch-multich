@@ -609,17 +609,30 @@ std::string RefArch::generateRxFilename(const std::string& base_fn,
     std::map<int, std::string> streamer_files =
         getStreamerFileLocation(rx_streamer_string, rx_file_location);
     try {
+        // Generate output folder name
         std::string cw_folder =
             "CW_" + std::to_string(tx_freq * 1e-9) + "_GHz_" + folder_name;
-        RA_filesystem::create_directory(RA_filesystem::path(
-            str(boost::format("%s%s") % streamer_files.at(rx_chan_num) % cw_folder)));
-        RA_filesystem::path base_fn_fp(
-            streamer_files.at(rx_chan_num) + cw_folder + "/" + base_fn);
-        base_fn_fp.replace_extension(RA_filesystem::path(
+        
+        // Create target file path
+        RA_filesystem::path target_fp = RA_filesystem::path(
+            str(boost::format("%s%s") % streamer_files.at(rx_chan_num) % cw_folder)
+        );
+        RA_filesystem::create_directory(target_fp);
+        
+        // Get filename without directory from base_fn
+        RA_filesystem::path base_fn_fp(base_fn);
+        
+        // Create target filename filepath
+        RA_filesystem::path target_fn_fp(
+            streamer_files.at(rx_chan_num) + cw_folder + "/" + base_fn_wo_dir);
+        std::cout << "base_fn_fp: " << base_fn_fp.string() << std::endl;
+        // Uniquely identify data stream
+        target_fn_fp.replace_extension(RA_filesystem::path(
             str(boost::format("%s%02d%s%02d%s%02d%s%02d%s") % "tx_" % tx_chan_num % "_rx_"
                 % rx_chan_num % "_run_" % run_num % "_cw_" % tx_freq
                 % base_fn_fp.extension().string())));
-        return base_fn_fp.string();
+                
+        return target_fn_fp.string();
     } catch (const std::out_of_range& oor) {
         throw uhd::runtime_error(
             "One or more file locations were not specified for initialized channel.");
